@@ -1,5 +1,9 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="pt-BR">
+=======
+<html lang="en">
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,6 +35,7 @@
         </div>
         <div class="form-group">
             <label for="num_patrimonio">Número do Patrimônio</label>
+<<<<<<< HEAD
             <div class="input-group">
                 <input type="text" class="form-control" id="num_patrimonio" placeholder="Número do patrimônio" required readonly>
                 <div class="input-group-append">
@@ -38,6 +43,9 @@
                 </div>
             </div>
             <small class="form-text text-muted">Clique no botão para gerar um código automaticamente</small>
+=======
+            <input type="text" class="form-control" id="num_patrimonio" placeholder="Número do patrimônio" required>
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
         </div>
         <div class="form-group">
             <label for="data_aquisicao">Data de Aquisição</label>
@@ -104,6 +112,7 @@
 </div>
 
 <script>
+<<<<<<< HEAD
     // Função para gerar código de patrimônio aleatório
     function gerarCodigoPatrimonio() {
         const prefixo = "PAT-"; // Prefixo personalizável
@@ -128,6 +137,15 @@
             if (!response.ok) throw new Error('Erro ao carregar patrimônios.');
             const data = await response.json();
             const patrimonios = data.patrimonios || [];
+=======
+    // Função para carregar os patrimônios do backend
+    async function loadPatrimonios() {
+        try {
+            const response = await fetch('http://localhost:3003/patrimonio'); // API para listar os patrimônios
+            if (!response.ok) throw new Error('Erro ao carregar patrimônios.');
+            const data = await response.json();
+            const patrimonios = data.patrimonios || []; // Certifique-se de que 'data.patrimonios' seja um array
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
             const tableBody = document.getElementById('patrimonioTableBody');
             tableBody.innerHTML = '';
 
@@ -140,7 +158,11 @@
                     <td>${patrimonio.num_patrimonio}</td>
                     <td>${patrimonio.data_aquisicao}</td>
                     <td>R$ ${parseFloat(patrimonio.valor_aquisicao).toFixed(2)}</td>
+<<<<<<< HEAD
                     <td>${patrimonio.garantia} meses</td>
+=======
+                    <td>${patrimonio.garantia}</td>
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
                     <td>${patrimonio.nota_fiscal}</td>
                     <td>${patrimonio.status_2}</td>
                     <td>
@@ -183,7 +205,10 @@
             if (!response.ok) throw new Error('Erro ao adicionar patrimônio.');
             alert('Patrimônio adicionado com sucesso!');
             document.getElementById('patrimonioForm').reset();
+<<<<<<< HEAD
             gerarCodigoPatrimonio(); // Gera novo código após cadastro
+=======
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
             loadPatrimonios();
         } catch (error) {
             alert(error.message);
@@ -204,7 +229,11 @@
         }
     }
 
+<<<<<<< HEAD
     // Função para editar um patrimônio
+=======
+    // Função para editar um patrimônio (exemplo simples)
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
     async function editPatrimonio(id_patrimonio) {
         const descricao = prompt('Nova descrição:');
         if (!descricao) return;
@@ -229,7 +258,11 @@
     // Função para carregar fornecedores
     async function loadFornecedores() {
         try {
+<<<<<<< HEAD
             const response = await fetch('http://localhost:3003/fornecedor');
+=======
+            const response = await fetch('http://localhost:3003/fornecedor'); // API para listar fornecedores
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
             if (!response.ok) throw new Error('Erro ao carregar fornecedores.');
             const fornecedores = await response.json();
             const fornecedorSelect = document.getElementById('fornecedor_id');
@@ -249,7 +282,11 @@
     // Função para carregar departamentos
     async function loadDepartamentos() {
         try {
+<<<<<<< HEAD
             const response = await fetch('http://localhost:3003/departamento');
+=======
+            const response = await fetch('http://localhost:3003/departamento'); // API para listar departamentos
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
             if (!response.ok) throw new Error('Erro ao carregar departamentos.');
             const data = await response.json();
             const departamentos = data.departamentos || [];
@@ -266,6 +303,18 @@
             alert(error.message);
         }
     }
+<<<<<<< HEAD
 </script>
+=======
+
+    // Carregar as opções ao carregar a página
+    loadFornecedores();
+    loadDepartamentos();
+
+    // Carregar os patrimônios ao carregar a página
+    loadPatrimonios();
+</script>
+
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 </body>
 </html>

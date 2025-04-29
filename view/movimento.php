@@ -1,12 +1,17 @@
 <?php
 session_start();
 
+<<<<<<< HEAD
 // Verifica se o usuário está logado
+=======
+// Check if user is logged in
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 if (!isset($_SESSION['usuario_logado'])) {
     header('Location: login.php');
     exit();
 }
 
+<<<<<<< HEAD
 // Conexão com o banco de dados
 require_once 'config.php';
 
@@ -30,6 +35,31 @@ try {
             LEFT JOIN usuario u ON t.id_usuario = u.id_usuario";
 
     // Adiciona filtros de data se fornecidos
+=======
+// Database connection
+require_once 'config.php'; // Should contain your PDO connection
+
+try {
+    // Get filter dates from GET parameters
+    $startDate = isset($_GET['startDate']) ? $_GET['startDate'] : null;
+    $endDate = isset($_GET['endDate']) ? $_GET['endDate'] : null;
+
+    // Prepare base query
+    $sql = "SELECT t.id_transferencia, 
+                   d1.nome AS departamento_atual, 
+                   d2.nome AS departamento_destino,
+                   p.numero_patrimonio,
+                   u.nome AS responsavel,
+                   t.data_transferencia,
+                   t.observacao
+            FROM transferencias t
+            LEFT JOIN departamentos d1 ON t.departamento_id = d1.id
+            LEFT JOIN departamentos d2 ON t.departamento_destino = d2.id
+            LEFT JOIN patrimonios p ON t.patrimonio_id = p.id
+            LEFT JOIN usuarios u ON t.usuario_id = u.id";
+
+    // Add date filters if provided
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
     $params = [];
     if ($startDate || $endDate) {
         $conditions = [];
@@ -46,12 +76,17 @@ try {
 
     $sql .= " ORDER BY t.data_transferencia DESC";
 
+<<<<<<< HEAD
     // Prepara e executa a consulta
+=======
+    // Prepare and execute query
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $transfers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (PDOException $e) {
+<<<<<<< HEAD
     // Exibe mensagem de erro detalhada em desenvolvimento
     error_log("Erro ao carregar transferências: " . $e->getMessage());
     echo "<div class='alert alert-danger'>Ocorreu um erro ao tentar carregar as transferências. Tente novamente mais tarde.</div>";
@@ -59,6 +94,11 @@ try {
 }
 ?>
 
+=======
+    die("Erro ao carregar transferências: " . $e->getMessage());
+}
+?>
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -104,6 +144,7 @@ try {
             <li class="nav-item"><a class="nav-link active" href="movimento.php">Movimento de Transferências</a></li>
         </ul>
         <div class="ms-auto">
+<<<<<<< HEAD
             <span class="navbar-text me-3">
                 <?php 
                 if (isset($_SESSION['usuario_logado']) && is_array($_SESSION['usuario_logado']) && isset($_SESSION['usuario_logado']['nome'])) {
@@ -113,6 +154,9 @@ try {
                 }
                 ?>
             </span>
+=======
+            <span class="navbar-text me-3">Bem-vindo, <?= htmlspecialchars($_SESSION['usuario_logado']['nome']) ?></span>
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
             <a href="logout.php" class="btn btn-outline-light">Sair</a>
         </div>
     </div>
@@ -123,7 +167,11 @@ try {
     <h2 class="mb-4">Movimento de Transferências</h2>
 
     <!-- Filtro de data -->
+<<<<<<< HEAD
     <form method="get" action="movimento.php" class="row g-3" onsubmit="return validateForm()">
+=======
+    <form method="get" action="movimento.php" class="row g-3">
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
         <div class="col-md-4">
             <label for="startDate" class="form-label">Data Início</label>
             <input type="date" class="form-control" id="startDate" name="startDate" 
@@ -184,6 +232,7 @@ try {
 
 <!-- Scripts JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<<<<<<< HEAD
 
 <script>
     // Validação do formulário para verificar se a data final não é anterior à data inicial
@@ -199,5 +248,7 @@ try {
     }
 </script>
 
+=======
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 </body>
 </html>

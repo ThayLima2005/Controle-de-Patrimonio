@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <?php
 session_start();
 require_once 'config.php'; // Arquivo com as configurações de conexão ao banco de dados
@@ -9,6 +10,8 @@ if (!isset($_SESSION['usuario_logado'])) {
 }
 ?>
 
+=======
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -22,12 +25,19 @@ if (!isset($_SESSION['usuario_logado'])) {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+<<<<<<< HEAD
             background-color: #f8f9fa;
+=======
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
         }
 
         .container {
             flex: 1;
+<<<<<<< HEAD
             margin-top: 100px; /* Aumenta o espaço acima da área do conteúdo */
+=======
+            margin-top: 100px;
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
         }
 
         .navbar {
@@ -58,6 +68,7 @@ if (!isset($_SESSION['usuario_logado'])) {
             width: 100%;
             margin-top: auto;
         }
+<<<<<<< HEAD
 
         h2 {
             font-size: 2rem;
@@ -72,6 +83,25 @@ if (!isset($_SESSION['usuario_logado'])) {
     </style>
 </head>
 <body>
+=======
+    </style>
+</head>
+<body>
+<?php
+// Inicia a sessão (para controle de login)
+session_start();
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario_logado'])) {
+    header('Location: login.php');
+    exit();
+}
+
+// Inclui o cabeçalho (se quiser modularizar)
+// include 'header.php';
+?>
+
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
     <a class="navbar-brand" href="index.php">Controle de Patrimônio</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,9 +155,17 @@ if (!isset($_SESSION['usuario_logado'])) {
 </div>
 
 <footer>
+<<<<<<< HEAD
     <p>&copy; <?php echo date("Y"); ?> Controle de Patrimônio. Todos os direitos reservados.</p>
+=======
+    <p>&copy; <?php echo date('Y'); ?> Controle de Patrimônio. Todos os direitos reservados.</p>
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+<<<<<<< HEAD
 </html>
+=======
+</html>
+>>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
