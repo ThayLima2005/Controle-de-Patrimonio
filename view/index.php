@@ -1,23 +1,19 @@
-<<<<<<< HEAD
 <?php
 session_start();
-require_once 'config.php'; // Arquivo com as configurações de conexão ao banco de dados
+require_once 'config.php';
 
-// Verificar se o usuário está logado
+// Verifica se o usuário está logado
 if (!isset($_SESSION['usuario_logado'])) {
     header("Location: login.php");
     exit();
 }
 ?>
-
-=======
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Patrimônio</title>
+    <title>Patrimônio 360</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
     <style>
@@ -25,19 +21,12 @@ if (!isset($_SESSION['usuario_logado'])) {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-<<<<<<< HEAD
             background-color: #f8f9fa;
-=======
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
         }
 
         .container {
             flex: 1;
-<<<<<<< HEAD
-            margin-top: 100px; /* Aumenta o espaço acima da área do conteúdo */
-=======
             margin-top: 100px;
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
         }
 
         .navbar {
@@ -68,14 +57,13 @@ if (!isset($_SESSION['usuario_logado'])) {
             width: 100%;
             margin-top: auto;
         }
-<<<<<<< HEAD
-
+        
         h2 {
             font-size: 2rem;
             font-weight: 600;
             color: #007bff;
         }
-
+        
         p {
             font-size: 1.2rem;
             color: #555;
@@ -83,25 +71,6 @@ if (!isset($_SESSION['usuario_logado'])) {
     </style>
 </head>
 <body>
-=======
-    </style>
-</head>
-<body>
-<?php
-// Inicia a sessão (para controle de login)
-session_start();
-
-// Verifica se o usuário está logado
-if (!isset($_SESSION['usuario_logado'])) {
-    header('Location: login.php');
-    exit();
-}
-
-// Inclui o cabeçalho (se quiser modularizar)
-// include 'header.php';
-?>
-
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
     <a class="navbar-brand" href="index.php">Controle de Patrimônio</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -128,6 +97,7 @@ if (!isset($_SESSION['usuario_logado'])) {
                 <a class="nav-link" href="movimento.php">Movimento de Transferências</a>
             </li>
         </ul>
+        <span class="navbar-text me-3">Bem-vindo, <?= htmlspecialchars($_SESSION['usuario_logado']['nome'] ?? 'Usuário') ?></span>
         <a class="btn btn-outline-light" href="logout.php">Logoff</a>
     </div>
 </nav>
@@ -155,17 +125,9 @@ if (!isset($_SESSION['usuario_logado'])) {
 </div>
 
 <footer>
-<<<<<<< HEAD
-    <p>&copy; <?php echo date("Y"); ?> Controle de Patrimônio. Todos os direitos reservados.</p>
-=======
-    <p>&copy; <?php echo date('Y'); ?> Controle de Patrimônio. Todos os direitos reservados.</p>
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
+    <p>&copy; <?= date('Y') ?> Controle de Patrimônio. Todos os direitos reservados.</p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-<<<<<<< HEAD
 </html>
-=======
-</html>
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36

@@ -1,9 +1,88 @@
+<?php
+session_start();
+require_once 'config.php';
+
+// Verifica se o usuário está logado
+if (!isset($_SESSION['usuario_logado'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Funções para carregar dados
+function carregarPatrimonios($pdo) {
+    $stmt = $pdo->query("
+        SELECT p.*, f.razao_social, d.nome_departamento 
+        FROM patrimonio p
+        LEFT JOIN fornecedor f ON p.fornecedor_id = f.fornecedor_id
+        LEFT JOIN departamento d ON p.departamento_id = d.departamento_id
+        ORDER BY p.id_patrimonio DESC
+    ");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function carregarFornecedores($pdo) {
+    $stmt = $pdo->query("SELECT fornecedor_id, razao_social FROM fornecedor ORDER BY razao_social");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function carregarDepartamentos($pdo) {
+    $stmt = $pdo->query("SELECT departamento_id, nome_departamento FROM departamento ORDER BY nome_departamento");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Processar formulário de adição
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        $stmt = $pdo->prepare("
+            INSERT INTO patrimonio (
+                descricao, marca, num_patrimonio, data_aquisicao, 
+                valor_aquisicao, garantia, nota_fiscal, status_2, 
+                fornecedor_id, departamento_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        
+        $stmt->execute([
+            $_POST['descricao'],
+            $_POST['marca'],
+            $_POST['num_patrimonio'],
+            $_POST['data_aquisicao'],
+            $_POST['valor_aquisicao'],
+            $_POST['garantia'],
+            $_POST['nota_fiscal'],
+            $_POST['status_2'],
+            $_POST['fornecedor_id'],
+            $_POST['departamento_id']
+        ]);
+        
+        $_SESSION['mensagem'] = "Patrimônio adicionado com sucesso!";
+        header("Location: patrimonio.php");
+        exit();
+    } catch (PDOException $e) {
+        $_SESSION['erro'] = "Erro ao adicionar patrimônio: " . $e->getMessage();
+    }
+}
+
+// Processar exclusão
+if (isset($_GET['excluir'])) {
+    try {
+        $stmt = $pdo->prepare("DELETE FROM patrimonio WHERE id_patrimonio = ?");
+        $stmt->execute([$_GET['excluir']]);
+        $_SESSION['mensagem'] = "Patrimônio excluído com sucesso!";
+        header("Location: patrimonio.php");
+        exit();
+    } catch (PDOException $e) {
+        $_SESSION['erro'] = "Erro ao excluir patrimônio: " . $e->getMessage();
+    }
+}
+
+// Carregar dados
+$patrimonios = carregarPatrimonios($pdo);
+$fornecedores = carregarFornecedores($pdo);
+$departamentos = carregarDepartamentos($pdo);
+?>
+
 <!DOCTYPE html>
-<<<<<<< HEAD
 <html lang="pt-BR">
-=======
-<html lang="en">
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,51 +100,51 @@
 <body>
 
 <div class="container">
+    <?php if (isset($_SESSION['mensagem'])): ?>
+        <div class="alert alert-success"><?= $_SESSION['mensagem'] ?></div>
+        <?php unset($_SESSION['mensagem']); ?>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['erro'])): ?>
+        <div class="alert alert-danger"><?= $_SESSION['erro'] ?></div>
+        <?php unset($_SESSION['erro']); ?>
+    <?php endif; ?>
+
     <h1 class="text-center">Gerenciamento de Patrimônios</h1>
 
     <!-- Formulário para adicionar um patrimônio -->
-    <form id="patrimonioForm">
+    <form method="POST" action="patrimonio.php">
         <div class="form-group">
             <label for="descricao">Descrição</label>
-            <input type="text" class="form-control" id="descricao" placeholder="Descrição do patrimônio" required>
+            <input type="text" class="form-control" name="descricao" id="descricao" placeholder="Descrição do patrimônio" required>
         </div>
         <div class="form-group">
             <label for="marca">Marca</label>
-            <input type="text" class="form-control" id="marca" placeholder="Marca do patrimônio">
+            <input type="text" class="form-control" name="marca" id="marca" placeholder="Marca do patrimônio">
         </div>
         <div class="form-group">
             <label for="num_patrimonio">Número do Patrimônio</label>
-<<<<<<< HEAD
-            <div class="input-group">
-                <input type="text" class="form-control" id="num_patrimonio" placeholder="Número do patrimônio" required readonly>
-                <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="button" onclick="gerarCodigoPatrimonio()">Gerar Código</button>
-                </div>
-            </div>
-            <small class="form-text text-muted">Clique no botão para gerar um código automaticamente</small>
-=======
-            <input type="text" class="form-control" id="num_patrimonio" placeholder="Número do patrimônio" required>
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
+            <input type="text" class="form-control" name="num_patrimonio" id="num_patrimonio" placeholder="Número do patrimônio" required>
         </div>
         <div class="form-group">
             <label for="data_aquisicao">Data de Aquisição</label>
-            <input type="date" class="form-control" id="data_aquisicao" required>
+            <input type="date" class="form-control" name="data_aquisicao" id="data_aquisicao" required>
         </div>
         <div class="form-group">
             <label for="valor_aquisicao">Valor de Aquisição</label>
-            <input type="number" step="0.01" class="form-control" id="valor_aquisicao" placeholder="Valor em R$" required>
+            <input type="number" step="0.01" class="form-control" name="valor_aquisicao" id="valor_aquisicao" placeholder="Valor em R$" required>
         </div>
         <div class="form-group">
             <label for="garantia">Garantia (em meses)</label>
-            <input type="number" class="form-control" id="garantia" placeholder="Garantia em meses" required>
+            <input type="number" class="form-control" name="garantia" id="garantia" placeholder="Garantia em meses" required>
         </div>
         <div class="form-group">
             <label for="nota_fiscal">Nota Fiscal</label>
-            <input type="text" class="form-control" id="nota_fiscal" placeholder="Número da nota fiscal">
+            <input type="text" class="form-control" name="nota_fiscal" id="nota_fiscal" placeholder="Número da nota fiscal">
         </div>
         <div class="form-group">
             <label for="status_2">Status</label>
-            <select class="form-control" id="status_2" required>
+            <select class="form-control" name="status_2" id="status_2" required>
                 <option value="">Selecione o status</option>
                 <option value="Novo">Novo</option>
                 <option value="Usado">Usado</option>
@@ -73,14 +152,20 @@
         </div>
         <div class="form-group">
             <label for="fornecedor_id">Fornecedor</label>
-            <select class="form-control" id="fornecedor_id" required>
-                <!-- Opções serão carregadas dinamicamente -->
+            <select class="form-control" name="fornecedor_id" id="fornecedor_id" required>
+                <option value="">Selecione um fornecedor</option>
+                <?php foreach ($fornecedores as $fornecedor): ?>
+                    <option value="<?= $fornecedor['id_fornecedor'] ?>"><?= htmlspecialchars($fornecedor['razao_social']) ?></option>
+                <?php endforeach; ?>
             </select>
         </div>
         <div class="form-group">
             <label for="departamento_id">Departamento</label>
-            <select class="form-control" id="departamento_id" required>
-                <!-- Opções serão carregadas dinamicamente -->
+            <select class="form-control" name="departamento_id" id="departamento_id" required>
+                <option value="">Selecione um departamento</option>
+                <?php foreach ($departamentos as $departamento): ?>
+                    <option value="<?= $departamento['departamento_id'] ?>"><?= htmlspecialchars($departamento['nome_departamento']) ?></option>
+                <?php endforeach; ?>
             </select>
         </div>
         <button type="submit" class="btn btn-primary">Adicionar Patrimônio</button>
@@ -92,229 +177,46 @@
     <h2 class="text-center">Lista de Patrimônios</h2>
     <table class="table table-bordered table-hover">
         <thead>
-        <tr>
-            <th>ID</th>
-            <th>Descrição</th>
-            <th>Marca</th>
-            <th>Número Patrimônio</th>
-            <th>Data de Aquisição</th>
-            <th>Valor de Aquisição</th>
-            <th>Garantia</th>
-            <th>Nota Fiscal</th>
-            <th>Status</th>
-            <th>Ações</th>
-        </tr>
+            <tr>
+                <th>ID</th>
+                <th>Descrição</th>
+                <th>Marca</th>
+                <th>Nº Patrimônio</th>
+                <th>Data Aquisição</th>
+                <th>Valor (R$)</th>
+                <th>Garantia</th>
+                <th>Nota Fiscal</th>
+                <th>Status</th>
+                <th>Fornecedor</th>
+                <th>Departamento</th>
+                <th>Ações</th>
+            </tr>
         </thead>
-        <tbody id="patrimonioTableBody">
-        <!-- Linhas geradas dinamicamente -->
+        <tbody>
+            <?php foreach ($patrimonios as $patrimonio): ?>
+            <tr>
+                <td><?= $patrimonio['id_patrimonio'] ?></td>
+                <td><?= htmlspecialchars($patrimonio['descricao']) ?></td>
+                <td><?= htmlspecialchars($patrimonio['marca']) ?></td>
+                <td><?= htmlspecialchars($patrimonio['num_patrimonio']) ?></td>
+                <td><?= date('d/m/Y', strtotime($patrimonio['data_aquisicao'])) ?></td>
+                <td>R$ <?= number_format($patrimonio['valor_aquisicao'], 2, ',', '.') ?></td>
+                <td><?= $patrimonio['garantia'] ?> meses</td>
+                <td><?= htmlspecialchars($patrimonio['nota_fiscal']) ?></td>
+                <td><?= htmlspecialchars($patrimonio['status_2']) ?></td>
+                <td><?= htmlspecialchars($patrimonio['razao_social'] ?? 'N/A') ?></td>
+                <td><?= htmlspecialchars($patrimonio['nome_departamento'] ?? 'N/A') ?></td>
+                <td>
+                    <a href="editar_patrimonio.php?id=<?= $patrimonio['id_patrimonio'] ?>" class="btn btn-warning btn-sm">Editar</a>
+                    <a href="patrimonio.php?excluir=<?= $patrimonio['id_patrimonio'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este patrimônio?')">Excluir</a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
         </tbody>
     </table>
 </div>
 
-<script>
-<<<<<<< HEAD
-    // Função para gerar código de patrimônio aleatório
-    function gerarCodigoPatrimonio() {
-        const prefixo = "PAT-"; // Prefixo personalizável
-        const numeroAleatorio = Math.floor(100000 + Math.random() * 900000); // Gera número de 6 dígitos
-        const codigo = prefixo + numeroAleatorio;
-        
-        document.getElementById('num_patrimonio').value = codigo;
-    }
-
-    // Gerar código automaticamente ao carregar a página
-    document.addEventListener('DOMContentLoaded', function() {
-        gerarCodigoPatrimonio();
-        loadFornecedores();
-        loadDepartamentos();
-        loadPatrimonios();
-    });
-
-    // Função para carregar os patrimônios do backend
-    async function loadPatrimonios() {
-        try {
-            const response = await fetch('http://localhost:3003/patrimonio');
-            if (!response.ok) throw new Error('Erro ao carregar patrimônios.');
-            const data = await response.json();
-            const patrimonios = data.patrimonios || [];
-=======
-    // Função para carregar os patrimônios do backend
-    async function loadPatrimonios() {
-        try {
-            const response = await fetch('http://localhost:3003/patrimonio'); // API para listar os patrimônios
-            if (!response.ok) throw new Error('Erro ao carregar patrimônios.');
-            const data = await response.json();
-            const patrimonios = data.patrimonios || []; // Certifique-se de que 'data.patrimonios' seja um array
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
-            const tableBody = document.getElementById('patrimonioTableBody');
-            tableBody.innerHTML = '';
-
-            patrimonios.forEach(patrimonio => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${patrimonio.id_patrimonio}</td>
-                    <td>${patrimonio.descricao}</td>
-                    <td>${patrimonio.marca}</td>
-                    <td>${patrimonio.num_patrimonio}</td>
-                    <td>${patrimonio.data_aquisicao}</td>
-                    <td>R$ ${parseFloat(patrimonio.valor_aquisicao).toFixed(2)}</td>
-<<<<<<< HEAD
-                    <td>${patrimonio.garantia} meses</td>
-=======
-                    <td>${patrimonio.garantia}</td>
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
-                    <td>${patrimonio.nota_fiscal}</td>
-                    <td>${patrimonio.status_2}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="editPatrimonio(${patrimonio.id_patrimonio})">Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="deletePatrimonio(${patrimonio.id_patrimonio})">Excluir</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
-    // Função para adicionar um patrimônio
-    document.getElementById('patrimonioForm').addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const patrimonio = {
-            descricao: document.getElementById('descricao').value,
-            marca: document.getElementById('marca').value,
-            num_patrimonio: document.getElementById('num_patrimonio').value,
-            data_aquisicao: document.getElementById('data_aquisicao').value,
-            valor_aquisicao: parseFloat(document.getElementById('valor_aquisicao').value),
-            garantia: parseInt(document.getElementById('garantia').value),
-            nota_fiscal: document.getElementById('nota_fiscal').value,
-            status_2: document.getElementById('status_2').value,
-            fornecedor_id: parseInt(document.getElementById('fornecedor_id').value),
-            departamento_id: parseInt(document.getElementById('departamento_id').value)
-        };
-
-        try {
-            const response = await fetch('http://localhost:3003/patrimonio', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(patrimonio)
-            });
-
-            if (!response.ok) throw new Error('Erro ao adicionar patrimônio.');
-            alert('Patrimônio adicionado com sucesso!');
-            document.getElementById('patrimonioForm').reset();
-<<<<<<< HEAD
-            gerarCodigoPatrimonio(); // Gera novo código após cadastro
-=======
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
-            loadPatrimonios();
-        } catch (error) {
-            alert(error.message);
-        }
-    });
-
-    // Função para excluir um patrimônio
-    async function deletePatrimonio(id_patrimonio) {
-        if (confirm('Tem certeza que deseja excluir este patrimônio?')) {
-            try {
-                const response = await fetch(`http://localhost:3003/patrimonio/${id_patrimonio}`, { method: 'DELETE' });
-                if (!response.ok) throw new Error('Erro ao excluir patrimônio.');
-                alert('Patrimônio excluído com sucesso!');
-                loadPatrimonios();
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-    }
-
-<<<<<<< HEAD
-    // Função para editar um patrimônio
-=======
-    // Função para editar um patrimônio (exemplo simples)
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
-    async function editPatrimonio(id_patrimonio) {
-        const descricao = prompt('Nova descrição:');
-        if (!descricao) return;
-
-        try {
-            const response = await fetch(`http://localhost:3003/patrimonio/${id_patrimonio}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ descricao })
-            });
-
-            if (!response.ok) throw new Error('Erro ao editar patrimônio.');
-            alert('Patrimônio editado com sucesso!');
-            loadPatrimonios();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
-    // Função para carregar fornecedores
-    async function loadFornecedores() {
-        try {
-<<<<<<< HEAD
-            const response = await fetch('http://localhost:3003/fornecedor');
-=======
-            const response = await fetch('http://localhost:3003/fornecedor'); // API para listar fornecedores
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
-            if (!response.ok) throw new Error('Erro ao carregar fornecedores.');
-            const fornecedores = await response.json();
-            const fornecedorSelect = document.getElementById('fornecedor_id');
-            fornecedorSelect.innerHTML = '<option value="">Selecione um fornecedor</option>';
-
-            fornecedores.forEach(fornecedor => {
-                const option = document.createElement('option');
-                option.value = fornecedor.id_fornecedor;
-                option.textContent = fornecedor.razao_social;
-                fornecedorSelect.appendChild(option);
-            });
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-
-    // Função para carregar departamentos
-    async function loadDepartamentos() {
-        try {
-<<<<<<< HEAD
-            const response = await fetch('http://localhost:3003/departamento');
-=======
-            const response = await fetch('http://localhost:3003/departamento'); // API para listar departamentos
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
-            if (!response.ok) throw new Error('Erro ao carregar departamentos.');
-            const data = await response.json();
-            const departamentos = data.departamentos || [];
-            const departamentoSelect = document.getElementById('departamento_id');
-            departamentoSelect.innerHTML = '<option value="">Selecione um departamento</option>';
-
-            departamentos.forEach(departamento => {
-                const option = document.createElement('option');
-                option.value = departamento.departamento_id;
-                option.textContent = departamento.nome_departamento;
-                departamentoSelect.appendChild(option);
-            });
-        } catch (error) {
-            alert(error.message);
-        }
-    }
-<<<<<<< HEAD
-</script>
-=======
-
-    // Carregar as opções ao carregar a página
-    loadFornecedores();
-    loadDepartamentos();
-
-    // Carregar os patrimônios ao carregar a página
-    loadPatrimonios();
-</script>
-
->>>>>>> bd487f09ead85e150ce6fcd6d1e227f374995a36
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
