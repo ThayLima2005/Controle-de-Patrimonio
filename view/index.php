@@ -72,7 +72,7 @@ if (!isset($_SESSION['usuario_logado'])) {
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
-    <a class="navbar-brand" href="index.php">Controle de Patrimônio</a>
+    <a class="navbar-brand" href="index.php">Patrimônio 360</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -103,7 +103,7 @@ if (!isset($_SESSION['usuario_logado'])) {
 </nav>
 
 <div class="container">
-    <h2 class="mb-4">Bem-vindo ao Controle Patrimonial - Faculdade IDEAU</h2>
+    <h2 class="mb-4">Bem-vindo ao Patrimônio 360</h2>
     <p class="mb-4">Escolha uma das opções abaixo para gerenciar o controle de patrimônio:</p>
     <div class="row">
         <div class="col-md-4 mb-3">
