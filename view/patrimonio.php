@@ -32,6 +32,28 @@ function carregarDepartamentos($pdo) {
 
 // Processar formulário de adição
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Validar campos obrigatórios
+    $required = ['descricao', 'num_patrimonio', 'data_aquisicao', 'valor_aquisicao', 
+                'garantia', 'status_2', 'fornecedor_id', 'departamento_id'];
+    
+    foreach ($required as $field) {
+        if (empty($_POST[$field])) {
+            $_SESSION['erro'] = "O campo $field é obrigatório!";
+            header("Location: patrimonio.php");
+            exit();
+        }
+    }
+    
+    // Tratar campos opcionais
+    $marca = !empty($_POST['marca']) ? $_POST['marca'] : null;
+    $nota_fiscal = !empty($_POST['nota_fiscal']) ? $_POST['nota_fiscal'] : null;
+    
+    // Converter valores numéricos
+    $fornecedor_id = (int)$_POST['fornecedor_id'];
+    $departamento_id = (int)$_POST['departamento_id'];
+    $valor_aquisicao = (float)$_POST['valor_aquisicao'];
+    $garantia = (int)$_POST['garantia'];
+    
     try {
         $stmt = $pdo->prepare("
             INSERT INTO patrimonio (
@@ -43,15 +65,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $stmt->execute([
             $_POST['descricao'],
-            $_POST['marca'],
+            $marca,
             $_POST['num_patrimonio'],
             $_POST['data_aquisicao'],
-            $_POST['valor_aquisicao'],
-            $_POST['garantia'],
-            $_POST['nota_fiscal'],
+            $valor_aquisicao,
+            $garantia,
+            $nota_fiscal,
             $_POST['status_2'],
-            $_POST['fornecedor_id'],
-            $_POST['departamento_id']
+            $fornecedor_id,
+            $departamento_id
         ]);
         
         $_SESSION['mensagem'] = "Patrimônio adicionado com sucesso!";
@@ -59,6 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     } catch (PDOException $e) {
         $_SESSION['erro'] = "Erro ao adicionar patrimônio: " . $e->getMessage();
+        header("Location: patrimonio.php");
+        exit();
     }
 }
 
@@ -72,6 +96,8 @@ if (isset($_GET['excluir'])) {
         exit();
     } catch (PDOException $e) {
         $_SESSION['erro'] = "Erro ao excluir patrimônio: " . $e->getMessage();
+        header("Location: patrimonio.php");
+        exit();
     }
 }
 
@@ -98,8 +124,38 @@ $departamentos = carregarDepartamentos($pdo);
     </style>
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <a class="navbar-brand" href="index.php">Patrimônio 360</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto44444431">
+            <li class="nav-item">
+                <a class="nav-link" href="index.php">Página Inicial</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="patrimonio.php">Gerenciar Patrimônio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="transfer.php">Registrar Transferência</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="fornecedor.php">Gerenciar Fornecedor</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="departamento.php">Gerenciar Departamento</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="movimento.php">Movimento de Transferências</a>
+            </li>
+        </ul>
+        <span class="navbar-text me-3">Bem-vindo, <?= htmlspecialchars($_SESSION['usuario_logado']['nome'] ?? 'Usuário') ?></span>
+        <a class="btn btn-outline-light" href="logout.php">Logoff</a>
+    </div>
+</nav>
 
-<div class="container">
+<div class="container">        
     <?php if (isset($_SESSION['mensagem'])): ?>
         <div class="alert alert-success"><?= $_SESSION['mensagem'] ?></div>
         <?php unset($_SESSION['mensagem']); ?>
@@ -155,7 +211,7 @@ $departamentos = carregarDepartamentos($pdo);
             <select class="form-control" name="fornecedor_id" id="fornecedor_id" required>
                 <option value="">Selecione um fornecedor</option>
                 <?php foreach ($fornecedores as $fornecedor): ?>
-                    <option value="<?= $fornecedor['id_fornecedor'] ?>"><?= htmlspecialchars($fornecedor['razao_social']) ?></option>
+                    <option value="<?= $fornecedor['fornecedor_id'] ?>"><?= htmlspecialchars($fornecedor['razao_social']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

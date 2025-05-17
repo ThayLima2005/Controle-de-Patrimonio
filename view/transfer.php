@@ -11,22 +11,23 @@ if (!isset($_SESSION['usuario_logado'])) {
 require_once __DIR__ . '/config.php';
 
 try {
-    // Obtém todas as transferências
-    $stmtTransferencias = $pdo->query("
-        SELECT t.*, 
-               u.nome AS usuario, 
-               p.descricao AS patrimonio_descricao,
-               p.num_patrimonio,
-               d1.nome_departamento AS departamento_origem,
-               d2.nome_departamento AS departamento_destino_nome
+    // Obtém todas as transferências (consulta corrigida)
+    $sqlTransferencias = "
+        SELECT 
+            t.*,
+            u.nome AS usuario,
+            p.descricao AS patrimonio_descricao,
+            p.num_patrimonio,
+            de.nome_departamento AS departamento_origem,
+            para.nome_departamento AS departamento_destino_nome
         FROM transferencia t
-        JOIN usuario u ON t.id_usuario = u.id_usuario
-        JOIN patrimonio p ON t.patrimonio_id = p.id_patrimonio
-        JOIN departamento d1 ON t.departamento_id = d1.departamento_id
-        LEFT JOIN departamento d2 ON t.departamento_destino = d2.departamento_id
+        LEFT JOIN usuario u ON t.id_usuario = u.id_usuario
+        LEFT JOIN patrimonio p ON t.patrimonio_id = p.id_patrimonio
+        LEFT JOIN departamento de ON t.departamento_id = de.departamento_id
+        LEFT JOIN departamento para ON t.departamento_destino = para.departamento_id
         ORDER BY t.data_transferencia DESC
-    ");
-    $transferencias = $stmtTransferencias->fetchAll(PDO::FETCH_ASSOC);
+    ";
+    $transferencias = $pdo->query($sqlTransferencias)->fetchAll(PDO::FETCH_ASSOC);
 
     // Obtém todos os patrimônios
     $stmtPatrimonios = $pdo->query("
@@ -45,7 +46,7 @@ try {
     die("Erro ao carregar dados: " . $e->getMessage());
 }
 
-// Processa o formulário de transferência
+// Processa o formulário de transferência (código corrigido)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $erro = [];
     
@@ -79,25 +80,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Patrimônio não encontrado");
             }
 
-            // 2. Registra a transferência
-            $dadosTransferencia = [
-                'id_usuario' => $_SESSION['usuario_id'],
-                'departamento_id' => $patrimonio['departamento_id'],
-                'patrimonio_id' => $_POST['patrimonio_id'],
-                'departamento_destino' => $_POST['departamento_destino'],
-                'observacao' => $_POST['observacao'] ?? null,
-                'departamento_anterior' => $patrimonio['nome_departamento'],
-                'responsavel' => $_POST['responsavel']
-            ];
-
+            // 2. Registra a transferência (sintaxe corrigida)
             $stmtTransferencia = $pdo->prepare("
-                INSERT INTO transferencia 
-                (id_usuario, departamento_id, patrimonio_id, data_transferencia, departamento_destino, observacao, departamento_anterior, responsavel)
-                VALUES 
-                (:id_usuario, :departamento_id, :patrimonio_id, NOW(), :departamento_destino, :observacao, :departamento_anterior, :responsavel)
+                INSERT INTO transferencia SET
+                id_usuario = :id_usuario,
+                departamento_id = :departamento_id,
+                patrimonio_id = :patrimonio_id,
+                data_transferencia = NOW(),
+                departamento_destino = :departamento_destino,
+                observacao = :observacao,
+                departamento_anterior = :departamento_anterior,
+                responsavel = :responsavel
             ");
 
-            $stmtTransferencia->execute($dadosTransferencia);
+            $stmtTransferencia->execute([
+                ':id_usuario' => $_SESSION['usuario_id'],
+                ':departamento_id' => $patrimonio['departamento_id'],
+                ':patrimonio_id' => $_POST['patrimonio_id'],
+                ':departamento_destino' => $_POST['departamento_destino'],
+                ':observacao' => $_POST['observacao'] ?? null,
+                ':departamento_anterior' => $patrimonio['nome_departamento'],
+                ':responsavel' => $_POST['responsavel']
+            ]);
 
             // 3. Atualiza o departamento do patrimônio
             $stmtUpdatePatrimonio = $pdo->prepare("
@@ -109,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->commit();
 
             $_SESSION['mensagem'] = 'Transferência realizada com sucesso!';
-            header('Location: transferencia.php');
+            header('Location: ' . $_SERVER['PHP_SELF']);
             exit();
 
         } catch (Exception $e) {
@@ -144,6 +148,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <a class="navbar-brand" href="index.php">Patrimônio 360</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto44444431">
+            <li class="nav-item">
+                <a class="nav-link" href="index.php">Página Inicial</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="patrimonio.php">Gerenciar Patrimônio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="transfer.php">Registrar Transferência</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="fornecedor.php">Gerenciar Fornecedor</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="departamento.php">Gerenciar Departamento</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="movimento.php">Movimento de Transferências</a>
+            </li>
+        </ul>
+        <span class="navbar-text me-3">Bem-vindo, <?= htmlspecialchars($_SESSION['usuario_logado']['nome'] ?? 'Usuário') ?></span>
+        <a class="btn btn-outline-light" href="logout.php">Logoff</a>
+    </div>
+</nav>
 
 <div class="container">
     <?php if (isset($_SESSION['mensagem'])): ?>
@@ -163,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    <?php endif; ?>
+    <?php endif; ?><br><br><br>
 
     <h1 class="text-center mb-4">Gerenciamento de Transferências</h1>
 
@@ -173,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h5 class="mb-0">Nova Transferência</h5>
         </div>
         <div class="card-body">
-            <form method="POST" action="transferencia.php">
+            <form method="POST" action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>">
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label for="patrimonio_id" class="form-label">Patrimônio*</label>
@@ -213,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
-    <!-- Histórico de transferências -->
+    <!-- Histórico de transferências (exibição corrigida) -->
     <div class="card border-primary">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">Histórico de Transferências</h5>
@@ -233,16 +267,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (count($transferencias) > 0): ?>
-                            <?php foreach ($transferencias as $transferencia): ?>
+                        <?php if (!empty($transferencias)): ?>
+                            <?php foreach ($transferencias as $t): ?>
                                 <tr>
-                                    <td><?= date('d/m/Y H:i', strtotime($transferencia['data_transferencia'])) ?></td>
-                                    <td><?= htmlspecialchars($transferencia['num_patrimonio'] . ' - ' . $transferencia['patrimonio_descricao']) ?></td>
-                                    <td><?= htmlspecialchars($transferencia['departamento_anterior']) ?></td>
-                                    <td><?= htmlspecialchars($transferencia['departamento_destino_nome'] ?? $transferencia['departamento_destino']) ?></td>
-                                    <td><?= htmlspecialchars($transferencia['responsavel']) ?></td>
-                                    <td><?= htmlspecialchars($transferencia['usuario']) ?></td>
-                                    <td><?= htmlspecialchars($transferencia['observacao'] ?? '') ?></td>
+                                    <td><?= date('d/m/Y H:i', strtotime($t['data_transferencia'])) ?></td>
+                                    <td><?= htmlspecialchars($t['num_patrimonio'] . ' - ' . $t['patrimonio_descricao']) ?></td>
+                                    <td><?= htmlspecialchars($t['departamento_origem'] ?? 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($t['departamento_destino_nome'] ?? $t['departamento_destino']) ?></td>
+                                    <td><?= htmlspecialchars($t['responsavel']) ?></td>
+                                    <td><?= htmlspecialchars($t['usuario'] ?? 'N/A') ?></td>
+                                    <td><?= htmlspecialchars($t['observacao'] ?? '') ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -263,8 +297,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     document.querySelector('form').addEventListener('submit', function(e) {
         const patrimonio = document.getElementById('patrimonio_id').value;
         const departamento = document.getElementById('departamento_destino').value;
+        const responsavel = document.getElementById('responsavel').value;
         
-        if (patrimonio === '' || departamento === '') {
+        if (patrimonio === '' || departamento === '' || responsavel === '') {
             e.preventDefault();
             alert('Por favor, preencha todos os campos obrigatórios.');
         }

@@ -90,34 +90,36 @@ try {
     </style>
 </head>
 <body>
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="index.php">Controle de Patrimônio</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+    <a class="navbar-brand" href="index.php">Patrimônio 360</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
-            <li class="nav-item"><a class="nav-link" href="index.php">Página Inicial</a></li>
-            <li class="nav-item"><a class="nav-link" href="transfer.php">Gerenciar Transferências</a></li>
-            <li class="nav-item"><a class="nav-link active" href="movimento.php">Movimento de Transferências</a></li>
+        <ul class="navbar-nav me-auto44444431">
+            <li class="nav-item">
+                <a class="nav-link" href="index.php">Página Inicial</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="patrimonio.php">Gerenciar Patrimônio</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="transfer.php">Registrar Transferência</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="fornecedor.php">Gerenciar Fornecedor</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="departamento.php">Gerenciar Departamento</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="movimento.php">Movimento de Transferências</a>
+            </li>
         </ul>
-        <div class="ms-auto">
-            <span class="navbar-text me-3">
-                <?php 
-                if (isset($_SESSION['usuario_logado']) && is_array($_SESSION['usuario_logado']) && isset($_SESSION['usuario_logado']['nome'])) {
-                    echo 'Bem-vindo, ' . htmlspecialchars($_SESSION['usuario_logado']['nome']);
-                } else {
-                    echo 'Bem-vindo, Usuário';
-                }
-                ?>
-            </span>
-            <a href="logout.php" class="btn btn-outline-light">Sair</a>
-        </div>
+        <span class="navbar-text me-3">Bem-vindo, <?= htmlspecialchars($_SESSION['usuario_logado']['nome'] ?? 'Usuário') ?></span>
+        <a class="btn btn-outline-light" href="logout.php">Logoff</a>
     </div>
 </nav>
-
 <!-- Conteúdo principal -->
 <div class="container mt-4 main-content">
     <h2 class="mb-4">Movimento de Transferências</h2>
