@@ -8,6 +8,10 @@ if (!isset($_SESSION['usuario_logado'])) {
     exit();
 }
 
+// Inicializa variáveis de mensagem
+$mensagem = '';
+$tipoMensagem = '';
+
 // Funções para carregar dados
 function carregarPatrimonios($pdo) {
     $stmt = $pdo->query("
@@ -30,59 +34,97 @@ function carregarDepartamentos($pdo) {
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-// Processar formulário de adição
+// Processar adição/edição de patrimônio
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Validar campos obrigatórios
     $required = ['descricao', 'num_patrimonio', 'data_aquisicao', 'valor_aquisicao', 
                 'garantia', 'status_2', 'fornecedor_id', 'departamento_id'];
     
+    // Validar campos obrigatórios
     foreach ($required as $field) {
         if (empty($_POST[$field])) {
-            $_SESSION['erro'] = "O campo $field é obrigatório!";
-            header("Location: patrimonio.php");
-            exit();
+            $mensagem = "O campo $field é obrigatório!";
+            $tipoMensagem = 'danger';
+            break;
         }
     }
     
-    // Tratar campos opcionais
-    $marca = !empty($_POST['marca']) ? $_POST['marca'] : null;
-    $nota_fiscal = !empty($_POST['nota_fiscal']) ? $_POST['nota_fiscal'] : null;
-    
-    // Converter valores numéricos
-    $fornecedor_id = (int)$_POST['fornecedor_id'];
-    $departamento_id = (int)$_POST['departamento_id'];
-    $valor_aquisicao = (float)$_POST['valor_aquisicao'];
-    $garantia = (int)$_POST['garantia'];
-    
-    try {
-        $stmt = $pdo->prepare("
-            INSERT INTO patrimonio (
-                descricao, marca, num_patrimonio, data_aquisicao, 
-                valor_aquisicao, garantia, nota_fiscal, status_2, 
-                fornecedor_id, departamento_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+    if (empty($mensagem)) {
+        // Tratar campos opcionais
+        $marca = !empty($_POST['marca']) ? $_POST['marca'] : null;
+        $nota_fiscal = !empty($_POST['nota_fiscal']) ? $_POST['nota_fiscal'] : null;
         
-        $stmt->execute([
-            $_POST['descricao'],
-            $marca,
-            $_POST['num_patrimonio'],
-            $_POST['data_aquisicao'],
-            $valor_aquisicao,
-            $garantia,
-            $nota_fiscal,
-            $_POST['status_2'],
-            $fornecedor_id,
-            $departamento_id
-        ]);
+        // Converter valores numéricos
+        $fornecedor_id = (int)$_POST['fornecedor_id'];
+        $departamento_id = (int)$_POST['departamento_id'];
+        $valor_aquisicao = (float)$_POST['valor_aquisicao'];
+        $garantia = (int)$_POST['garantia'];
         
-        $_SESSION['mensagem'] = "Patrimônio adicionado com sucesso!";
-        header("Location: patrimonio.php");
-        exit();
-    } catch (PDOException $e) {
-        $_SESSION['erro'] = "Erro ao adicionar patrimônio: " . $e->getMessage();
-        header("Location: patrimonio.php");
-        exit();
+        try {
+            if (isset($_POST['editar'])) {
+                // Atualizar patrimônio existente
+                $id_patrimonio = (int)$_POST['id_patrimonio'];
+                
+                $stmt = $pdo->prepare("
+                    UPDATE patrimonio SET
+                        descricao = ?,
+                        marca = ?,
+                        num_patrimonio = ?,
+                        data_aquisicao = ?,
+                        valor_aquisicao = ?,
+                        garantia = ?,
+                        nota_fiscal = ?,
+                        status_2 = ?,
+                        fornecedor_id = ?,
+                        departamento_id = ?
+                    WHERE id_patrimonio = ?
+                ");
+                
+                $stmt->execute([
+                    $_POST['descricao'],
+                    $marca,
+                    $_POST['num_patrimonio'],
+                    $_POST['data_aquisicao'],
+                    $valor_aquisicao,
+                    $garantia,
+                    $nota_fiscal,
+                    $_POST['status_2'],
+                    $fornecedor_id,
+                    $departamento_id,
+                    $id_patrimonio
+                ]);
+                
+                $mensagem = "Patrimônio atualizado com sucesso!";
+                $tipoMensagem = 'success';
+            } else {
+                // Adicionar novo patrimônio
+                $stmt = $pdo->prepare("
+                    INSERT INTO patrimonio (
+                        descricao, marca, num_patrimonio, data_aquisicao, 
+                        valor_aquisicao, garantia, nota_fiscal, status_2, 
+                        fornecedor_id, departamento_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                
+                $stmt->execute([
+                    $_POST['descricao'],
+                    $marca,
+                    $_POST['num_patrimonio'],
+                    $_POST['data_aquisicao'],
+                    $valor_aquisicao,
+                    $garantia,
+                    $nota_fiscal,
+                    $_POST['status_2'],
+                    $fornecedor_id,
+                    $departamento_id
+                ]);
+                
+                $mensagem = "Patrimônio adicionado com sucesso!";
+                $tipoMensagem = 'success';
+            }
+        } catch (PDOException $e) {
+            $mensagem = "Erro ao salvar patrimônio: " . $e->getMessage();
+            $tipoMensagem = 'danger';
+        }
     }
 }
 
@@ -91,17 +133,31 @@ if (isset($_GET['excluir'])) {
     try {
         $stmt = $pdo->prepare("DELETE FROM patrimonio WHERE id_patrimonio = ?");
         $stmt->execute([$_GET['excluir']]);
-        $_SESSION['mensagem'] = "Patrimônio excluído com sucesso!";
-        header("Location: patrimonio.php");
-        exit();
+        $mensagem = "Patrimônio excluído com sucesso!";
+        $tipoMensagem = 'success';
     } catch (PDOException $e) {
-        $_SESSION['erro'] = "Erro ao excluir patrimônio: " . $e->getMessage();
-        header("Location: patrimonio.php");
-        exit();
+        $mensagem = "Erro ao excluir patrimônio: " . $e->getMessage();
+        $tipoMensagem = 'danger';
     }
 }
 
-// Carregar dados
+// Carregar dados para edição
+$patrimonioEditar = null;
+if (isset($_GET['editar'])) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT * FROM patrimonio 
+            WHERE id_patrimonio = ?
+        ");
+        $stmt->execute([$_GET['editar']]);
+        $patrimonioEditar = $stmt->fetch();
+    } catch (PDOException $e) {
+        $mensagem = "Erro ao carregar patrimônio: " . $e->getMessage();
+        $tipoMensagem = 'danger';
+    }
+}
+
+// Carregar listas
 $patrimonios = carregarPatrimonios($pdo);
 $fornecedores = carregarFornecedores($pdo);
 $departamentos = carregarDepartamentos($pdo);
@@ -113,13 +169,20 @@ $departamentos = carregarDepartamentos($pdo);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento de Patrimônios</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            padding: 20px;
+            padding-top: 56px;
         }
-        .btn-toolbar {
-            justify-content: space-between;
+        .navbar {
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: #f8f9fa;
+        }
+        .table thead th {
+            background-color: #007bff;
+            color: #fff;
         }
     </style>
 </head>
@@ -130,7 +193,7 @@ $departamentos = carregarDepartamentos($pdo);
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto44444431">
+        <ul class="navbar-nav me-auto">
             <li class="nav-item">
                 <a class="nav-link" href="index.php">Página Inicial</a>
             </li>
@@ -155,124 +218,155 @@ $departamentos = carregarDepartamentos($pdo);
     </div>
 </nav>
 
-<div class="container">        
-    <?php if (isset($_SESSION['mensagem'])): ?>
-        <div class="alert alert-success"><?= $_SESSION['mensagem'] ?></div>
-        <?php unset($_SESSION['mensagem']); ?>
-    <?php endif; ?>
-    
-    <?php if (isset($_SESSION['erro'])): ?>
-        <div class="alert alert-danger"><?= $_SESSION['erro'] ?></div>
-        <?php unset($_SESSION['erro']); ?>
+<div class="container mt-5">
+    <?php if (!empty($mensagem)): ?>
+        <div class="alert alert-<?= $tipoMensagem ?> alert-dismissible fade show">
+            <?= $mensagem ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     <?php endif; ?>
 
-    <h1 class="text-center">Gerenciamento de Patrimônios</h1>
-
-    <!-- Formulário para adicionar um patrimônio -->
-    <form method="POST" action="patrimonio.php">
-        <div class="form-group">
-            <label for="descricao">Descrição</label>
-            <input type="text" class="form-control" name="descricao" id="descricao" placeholder="Descrição do patrimônio" required>
+    <div class="row">
+        <div class="col-md-6">
+            <h2><?= isset($_GET['editar']) ? 'Editar' : 'Adicionar' ?> Patrimônio</h2>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="POST">
+                        <?php if (isset($patrimonioEditar)): ?>
+                            <input type="hidden" name="id_patrimonio" value="<?= $patrimonioEditar['id_patrimonio'] ?>">
+                        <?php endif; ?>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Descrição*</label>
+                            <input type="text" class="form-control" name="descricao" required
+                                   value="<?= htmlspecialchars($patrimonioEditar['descricao'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Marca</label>
+                            <input type="text" class="form-control" name="marca"
+                                   value="<?= htmlspecialchars($patrimonioEditar['marca'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Número do Patrimônio*</label>
+                            <input type="text" class="form-control" name="num_patrimonio" required
+                                   value="<?= htmlspecialchars($patrimonioEditar['num_patrimonio'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Data de Aquisição*</label>
+                            <input type="date" class="form-control" name="data_aquisicao" required
+                                   value="<?= htmlspecialchars($patrimonioEditar['data_aquisicao'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Valor de Aquisição*</label>
+                            <input type="number" step="0.01" class="form-control" name="valor_aquisicao" required
+                                   value="<?= htmlspecialchars($patrimonioEditar['valor_aquisicao'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Garantia (meses)*</label>
+                            <input type="number" class="form-control" name="garantia" required
+                                   value="<?= htmlspecialchars($patrimonioEditar['garantia'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nota Fiscal</label>
+                            <input type="text" class="form-control" name="nota_fiscal"
+                                   value="<?= htmlspecialchars($patrimonioEditar['nota_fiscal'] ?? '') ?>">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Status*</label>
+                            <select class="form-control" name="status_2" required>
+                                <option value="Novo" <?= ($patrimonioEditar['status_2'] ?? '') == 'Novo' ? 'selected' : '' ?>>Novo</option>
+                                <option value="Usado" <?= ($patrimonioEditar['status_2'] ?? '') == 'Usado' ? 'selected' : '' ?>>Usado</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Fornecedor*</label>
+                            <select class="form-control" name="fornecedor_id" required>
+                                <option value="">Selecione um fornecedor</option>
+                                <?php foreach ($fornecedores as $fornecedor): ?>
+                                    <option value="<?= $fornecedor['fornecedor_id'] ?>" 
+                                        <?= ($patrimonioEditar['fornecedor_id'] ?? '') == $fornecedor['fornecedor_id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($fornecedor['razao_social']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Departamento*</label>
+                            <select class="form-control" name="departamento_id" required>
+                                <option value="">Selecione um departamento</option>
+                                <?php foreach ($departamentos as $departamento): ?>
+                                    <option value="<?= $departamento['departamento_id'] ?>" 
+                                        <?= ($patrimonioEditar['departamento_id'] ?? '') == $departamento['departamento_id'] ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($departamento['nome_departamento']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" name="<?= isset($_GET['editar']) ? 'editar' : 'adicionar' ?>">
+                            <?= isset($_GET['editar']) ? 'Atualizar' : 'Cadastrar' ?> Patrimônio
+                        </button>
+                        
+                        <?php if (isset($_GET['editar'])): ?>
+                            <a href="patrimonio.php" class="btn btn-secondary">Cancelar</a>
+                        <?php endif; ?>
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="marca">Marca</label>
-            <input type="text" class="form-control" name="marca" id="marca" placeholder="Marca do patrimônio">
+        
+        <div class="col-md-6">
+            <h2>Lista de Patrimônios</h2>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>ID</th>
+                            <th>Descrição</th>
+                            <th>Nº Patrimônio</th>
+                            <th>Valor (R$)</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (count($patrimonios) > 0): ?>
+                            <?php foreach ($patrimonios as $patrimonio): ?>
+                                <tr>
+                                    <td><?= $patrimonio['id_patrimonio'] ?></td>
+                                    <td><?= htmlspecialchars($patrimonio['descricao']) ?></td>
+                                    <td><?= htmlspecialchars($patrimonio['num_patrimonio']) ?></td>
+                                    <td>R$ <?= number_format($patrimonio['valor_aquisicao'], 2, ',', '.') ?></td>
+                                    <td>
+                                        <a href="patrimonio.php?editar=<?= $patrimonio['id_patrimonio'] ?>" class="btn btn-sm btn-warning">Editar</a>
+                                        <a href="patrimonio.php?excluir=<?= $patrimonio['id_patrimonio'] ?>" 
+                                           class="btn btn-sm btn-danger" 
+                                           onclick="return confirm('Tem certeza que deseja excluir este patrimônio?')">
+                                            Excluir
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" class="text-center">Nenhum patrimônio cadastrado</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="num_patrimonio">Número do Patrimônio</label>
-            <input type="text" class="form-control" name="num_patrimonio" id="num_patrimonio" placeholder="Número do patrimônio" required>
-        </div>
-        <div class="form-group">
-            <label for="data_aquisicao">Data de Aquisição</label>
-            <input type="date" class="form-control" name="data_aquisicao" id="data_aquisicao" required>
-        </div>
-        <div class="form-group">
-            <label for="valor_aquisicao">Valor de Aquisição</label>
-            <input type="number" step="0.01" class="form-control" name="valor_aquisicao" id="valor_aquisicao" placeholder="Valor em R$" required>
-        </div>
-        <div class="form-group">
-            <label for="garantia">Garantia (em meses)</label>
-            <input type="number" class="form-control" name="garantia" id="garantia" placeholder="Garantia em meses" required>
-        </div>
-        <div class="form-group">
-            <label for="nota_fiscal">Nota Fiscal</label>
-            <input type="text" class="form-control" name="nota_fiscal" id="nota_fiscal" placeholder="Número da nota fiscal">
-        </div>
-        <div class="form-group">
-            <label for="status_2">Status</label>
-            <select class="form-control" name="status_2" id="status_2" required>
-                <option value="">Selecione o status</option>
-                <option value="Novo">Novo</option>
-                <option value="Usado">Usado</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="fornecedor_id">Fornecedor</label>
-            <select class="form-control" name="fornecedor_id" id="fornecedor_id" required>
-                <option value="">Selecione um fornecedor</option>
-                <?php foreach ($fornecedores as $fornecedor): ?>
-                    <option value="<?= $fornecedor['fornecedor_id'] ?>"><?= htmlspecialchars($fornecedor['razao_social']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="departamento_id">Departamento</label>
-            <select class="form-control" name="departamento_id" id="departamento_id" required>
-                <option value="">Selecione um departamento</option>
-                <?php foreach ($departamentos as $departamento): ?>
-                    <option value="<?= $departamento['departamento_id'] ?>"><?= htmlspecialchars($departamento['nome_departamento']) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Adicionar Patrimônio</button>
-    </form>
-
-    <hr>
-
-    <!-- Tabela para listar os patrimônios -->
-    <h2 class="text-center">Lista de Patrimônios</h2>
-    <table class="table table-bordered table-hover">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Descrição</th>
-                <th>Marca</th>
-                <th>Nº Patrimônio</th>
-                <th>Data Aquisição</th>
-                <th>Valor (R$)</th>
-                <th>Garantia</th>
-                <th>Nota Fiscal</th>
-                <th>Status</th>
-                <th>Fornecedor</th>
-                <th>Departamento</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($patrimonios as $patrimonio): ?>
-            <tr>
-                <td><?= $patrimonio['id_patrimonio'] ?></td>
-                <td><?= htmlspecialchars($patrimonio['descricao']) ?></td>
-                <td><?= htmlspecialchars($patrimonio['marca']) ?></td>
-                <td><?= htmlspecialchars($patrimonio['num_patrimonio']) ?></td>
-                <td><?= date('d/m/Y', strtotime($patrimonio['data_aquisicao'])) ?></td>
-                <td>R$ <?= number_format($patrimonio['valor_aquisicao'], 2, ',', '.') ?></td>
-                <td><?= $patrimonio['garantia'] ?> meses</td>
-                <td><?= htmlspecialchars($patrimonio['nota_fiscal']) ?></td>
-                <td><?= htmlspecialchars($patrimonio['status_2']) ?></td>
-                <td><?= htmlspecialchars($patrimonio['razao_social'] ?? 'N/A') ?></td>
-                <td><?= htmlspecialchars($patrimonio['nome_departamento'] ?? 'N/A') ?></td>
-                <td>
-                    <a href="editar_patrimonio.php?id=<?= $patrimonio['id_patrimonio'] ?>" class="btn btn-warning btn-sm">Editar</a>
-                    <a href="patrimonio.php?excluir=<?= $patrimonio['id_patrimonio'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este patrimônio?')">Excluir</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+    </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

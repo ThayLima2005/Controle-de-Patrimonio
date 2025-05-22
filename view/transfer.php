@@ -190,14 +190,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <?php if (!empty($erro)): ?>
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <ul>
+            <ul><br><br><br>
                 <?php foreach ($erro as $mensagem): ?>
                     <li><?= htmlspecialchars($mensagem) ?></li>
                 <?php endforeach; ?>
             </ul>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
-    <?php endif; ?><br><br><br>
+    <?php endif; ?><br><br><br><br>
 
     <h1 class="text-center mb-4">Gerenciamento de Transferências</h1>
 
@@ -262,7 +262,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <th>De</th>
                             <th>Para</th>
                             <th>Responsável</th>
-                            <th>Usuário</th>
                             <th>Observações</th>
                         </tr>
                     </thead>
@@ -275,7 +274,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <td><?= htmlspecialchars($t['departamento_origem'] ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($t['departamento_destino_nome'] ?? $t['departamento_destino']) ?></td>
                                     <td><?= htmlspecialchars($t['responsavel']) ?></td>
-                                    <td><?= htmlspecialchars($t['usuario'] ?? 'N/A') ?></td>
                                     <td><?= htmlspecialchars($t['observacao'] ?? '') ?></td>
                                 </tr>
                             <?php endforeach; ?>
