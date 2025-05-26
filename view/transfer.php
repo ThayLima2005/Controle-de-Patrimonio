@@ -145,6 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background-color: #007bff;
             color: white;
         }
+        .alert{
+            margin-top: 60px;
+        }
     </style>
 </head>
 <body>
