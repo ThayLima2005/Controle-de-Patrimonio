@@ -94,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ");
 
             $stmtTransferencia->execute([
-                ':id_usuario' => $_SESSION['usuario_id'],
+                ':id_usuario' => $_SESSION['usuario_logado']['id'],
                 ':departamento_id' => $patrimonio['departamento_id'],
                 ':patrimonio_id' => $_POST['patrimonio_id'],
                 ':departamento_destino' => $_POST['departamento_destino'],
